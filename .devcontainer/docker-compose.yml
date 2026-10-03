@@ -1,8 +1,8 @@
 services:
   ide-service:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
     user: root
     init: true
     ports:
