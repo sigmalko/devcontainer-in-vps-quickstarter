@@ -1,0 +1,26 @@
+services:
+  ide-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: root
+    init: true
+    ports:
+      - "${SSH_PORT:-2222}:22"
+    # DO NOT MOUNT /var/run/docker.sock:/var/run/docker.sock HERE (#5458).
+    # The `docker-outside-of-docker` feature in devcontainer.json adds the host
+    # socket: it mounts it as /var/run/docker-host.sock and places ITS OWN
+    # socat proxy (mode=660,user=vscode) at /var/run/docker.sock in
+    # /usr/local/share/docker-init.sh. This init runs
+    # `rm -rf /var/run/docker.sock` with `set -e`, so a second bind mount at
+    # the same path causes EBUSY: the script dies BEFORE starting socat, and
+    # the container is left with a root:root 660 socket that `vscode` has no
+    # way to access (symptom: `permission denied ...
+    # unix:///var/run/docker.sock`). Without this entry, the container does
+    # NOT lose access to the host socket — the feature adds it.
+    environment:
+      TZ: Europe/Warsaw
+      CHROME_BIN: /usr/bin/chromium-browser
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
+    command: ["/usr/sbin/sshd", "-D", "-e"]
