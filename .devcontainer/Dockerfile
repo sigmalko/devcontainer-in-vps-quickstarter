@@ -26,15 +26,25 @@ RUN chown -R vscode:vscode /home/vscode/.ssh && \
     chmod 700 /home/vscode/.ssh && \
     chmod 600 /home/vscode/.ssh/authorized_keys
 
-# Start interactive SSH sessions in the mounted workspace directory.
+# Load the interactive Bash configuration for SSH login shells and start in the
+# mounted workspace directory.
 RUN printf '%s\n' \
         '' \
+        '[ -f ~/.bashrc ] && . ~/.bashrc' \
         '# Start interactive SSH sessions in the workspace directory.' \
         'if [[ -n "${SSH_CONNECTION:-}" && -d /workspaces ]]; then' \
         '    cd /workspaces' \
         'fi' \
         >> /home/vscode/.bash_profile && \
     chown vscode:vscode /home/vscode/.bash_profile
+
+RUN mkdir -p /home/vscode/.bashrc.d && chown vscode:vscode /home/vscode/.bashrc.d
+COPY --chown=vscode:vscode .devcontainer/bashrc-truecolor.sh /home/vscode/.bashrc.d/truecolor.sh
+RUN printf '%s\n' \
+        '' \
+        '[ -f ~/.bashrc.d/truecolor.sh ] && . ~/.bashrc.d/truecolor.sh' \
+        >> /home/vscode/.bashrc && \
+    chown vscode:vscode /home/vscode/.bashrc /home/vscode/.bashrc.d/truecolor.sh
 
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D", "-e"]

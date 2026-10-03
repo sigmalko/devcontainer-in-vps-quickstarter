@@ -102,6 +102,30 @@ Keep these host-key files to preserve the server identity. If you intentionally
 rotate them, verify the new fingerprint before updating each client's
 `known_hosts` entry.
 
+## Terminal colors
+
+Interactive Bash sessions use a Catppuccin Mocha-inspired truecolor prompt,
+chosen for readability in VS Code dark themes. The prompt exports
+`COLORTERM=truecolor` and preserves the terminal-provided `TERM` value. It
+shows the user and host in blue, the current directory in green, the Git branch
+in peach, and a failed command status in red.
+
+## Scheduled CLI updates
+
+The base image provides a daily update job for Claude and Codex at `04:00`.
+It is a system cron definition in `/etc/cron.d/devcontainer-cli-updates`, not a
+per-user crontab, so `crontab -l` for `vscode` correctly shows no entries.
+
+The Dev Container starts `cron` alongside `sshd`, so the job is active after
+startup. Inspect its definition and log with:
+
+```bash
+cat /etc/cron.d/devcontainer-cli-updates
+tail -f /var/log/devcontainer-cli-updates.log
+```
+
+GitHub CLI (`gh`) is installed through the Dev Container GitHub CLI feature.
+
 ## Changing the key or port
 
 - After changing `SSH_PORT`, restart the container.

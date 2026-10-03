@@ -27,4 +27,6 @@ services:
       CHROME_BIN: /usr/bin/chromium-browser
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
-    command: ["/usr/sbin/sshd", "-D", "-e"]
+    # Dev Containers execute the service command as `containerUser` (vscode).
+    # Both daemons need root: cron writes its PID in /run and sshd binds port 22.
+    command: ["/bin/sh", "-c", "sudo cron && exec sudo /usr/sbin/sshd -D -e"]
