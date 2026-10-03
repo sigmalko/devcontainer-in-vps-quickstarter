@@ -29,5 +29,6 @@ ensure_ssh_key() {
 ensure_ssh_key
 
 devcontainer up \
-  --workspace-folder "$PWD" \
-  --config "$PWD/.devcontainer/devcontainer.json"
+  --remove-existing-container \
+  --workspace-folder "$project_dir" \
+  --config "$project_dir/.devcontainer/devcontainer.json"

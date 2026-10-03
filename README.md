@@ -41,9 +41,10 @@ Run the commands from the project root directory.
    The script creates `.ssh/id_ed25519` and `.ssh/id_ed25519.pub`. It does not
    overwrite an existing key. The public key is copied into the image as the
    `authorized_keys` file for the `vscode` user; the private key remains on the
-   host only.
+   host only. It then removes an existing Dev Container, builds a new one, and
+   starts it.
 
-4. Build and start the Dev Container.
+4. Alternatively, build and start the Dev Container manually.
 
    In VS Code, open the project directory and run
    **Dev Containers: Reopen in Container**.
@@ -56,8 +57,7 @@ Run the commands from the project root directory.
      --config "$PWD/.devcontainer/devcontainer.json"
    ```
 
-   On the first run, the image is built and the SSH server starts in the
-   container.
+   Add `--remove-existing-container` to recreate an existing Dev Container.
 
 ## Connecting over SSH
 
@@ -86,3 +86,30 @@ login for the `vscode` user is allowed. An interactive SSH session starts in
   the container with `devcontainer up`, because the public key is added to the
   image during its build.
 - Do not add `.ssh/id_ed25519` or `.devcontainer/.env` to the repository.
+
+## Recreating the Dev Container
+
+Running `devcontainer up` alone can reuse an existing container. To remove the
+current Dev Container and create a new one, run:
+
+```bash
+devcontainer up \
+  --remove-existing-container \
+  --workspace-folder "$PWD" \
+  --config "$PWD/.devcontainer/devcontainer.json"
+```
+
+Files in the project directory remain available because the workspace is
+mounted into the container. Data stored only in the old container filesystem is
+removed.
+
+To also rebuild the image without using Docker's build cache, add
+`--build-no-cache`:
+
+```bash
+devcontainer up \
+  --remove-existing-container \
+  --build-no-cache \
+  --workspace-folder "$PWD" \
+  --config "$PWD/.devcontainer/devcontainer.json"
+```
