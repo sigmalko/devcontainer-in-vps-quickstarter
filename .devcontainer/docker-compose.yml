@@ -20,6 +20,7 @@ services:
     # NOT lose access to the host socket — the feature adds it.
     environment:
       TZ: Europe/Warsaw
+      DOCKER_API_VERSION: ${DOCKER_API_VERSION:-1.48}
       CHROME_BIN: /usr/bin/chromium-browser
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}

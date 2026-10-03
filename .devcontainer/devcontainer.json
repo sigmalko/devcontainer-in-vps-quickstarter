@@ -1,0 +1,60 @@
+{
+	"name": "my-app-development",
+	"dockerComposeFile":[
+		"./docker-compose.yml"
+	],
+    "service": "ide-service",
+    "workspaceFolder": "/workspaces",
+	"features": {
+		"ghcr.io/devcontainers/features/java:1": {
+			"version": "25",
+			"jdkDistro": "tem",						
+			"installMaven": "true",
+			"installGradle": "false",
+            "MAVENVERSION": "3.9.16"
+		},
+        "ghcr.io/devcontainers/features/docker-outside-of-docker": {
+            "moby": false,
+            "version": "latest",
+            "dockerDashComposeVersion": "v2"
+        },        
+        "ghcr.io/devcontainers/features/git": {
+
+        },
+        "ghcr.io/devcontainers/features/common-utils": {
+            
+        }
+	},
+    // "settings": {
+    //     "java.jdt.ls.java.home": "/usr/lib/jvm/java-25-openjdk-amd64"
+    // },    
+	"customizations": {
+	"vscode": {
+		"extensions": [
+			"vscjava.vscode-java-pack",
+			"ms-azuretools.vscode-docker",
+			"redhat.vscode-yaml",
+			"ms-vscode.code-runner",
+			"anthropic.claude-code",
+			"openai.chatgpt",
+			"dbaeumer.vscode-eslint",
+			"esbenp.prettier-vscode",
+			"bierner.markdown-mermaid",
+			"colossal.workspace-grid"
+		],
+		"settings": {
+			"terminal.integrated.defaultProfile.linux": "bash",
+			"window.title": "AGENT-AI — ${activeEditorShort}${separator}${rootName}"
+		}
+	}
+    },
+    "remoteEnv": {
+        "CHROME_BIN": "/usr/bin/chromium-browser",
+        "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/chromium-browser",
+        "MAVEN_USER_HOME": "/home/vscode/.m2"
+    },
+    "remoteUser": "vscode",
+    "containerUser": "vscode",
+    "postCreateCommand": "sudo chown -R vscode:vscode /workspaces /home/vscode/.m2 /home/vscode/.ssh",
+    "shutdownAction": "none"
+}
