@@ -34,8 +34,5 @@ RUN printf '%s\n' \
         >> /home/vscode/.bash_profile && \
     chown vscode:vscode /home/vscode/.bash_profile
 
-# Setup script (owned by vscode)
-COPY --chown=vscode:vscode .devcontainer/setup.sh /workspaces/
-
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D", "-e"]
