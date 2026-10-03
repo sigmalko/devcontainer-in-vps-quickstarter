@@ -38,11 +38,15 @@ Run the commands from the project root directory.
    ./up.sh
    ```
 
-   The script creates `.ssh/id_ed25519` and `.ssh/id_ed25519.pub`. It does not
-   overwrite an existing key. The public key is copied into the image as the
-   `authorized_keys` file for the `vscode` user; the private key remains on the
-   host only. It then removes an existing Dev Container, builds a new one, and
-   starts it.
+   The script creates two key pairs if they do not already exist:
+
+   - `.ssh/id_ed25519` and `.ssh/id_ed25519.pub` authenticate the SSH client;
+   - `.ssh/ssh_host_ed25519_key` and `.ssh/ssh_host_ed25519_key.pub` identify
+     the SSH server.
+
+   The client public key is copied into the image as the `authorized_keys` file
+   for the `vscode` user. Both private keys remain on the host. The script then
+   removes an existing Dev Container, builds a new one, and starts it.
 
 4. Alternatively, build and start the Dev Container manually.
 
@@ -58,6 +62,8 @@ Run the commands from the project root directory.
    ```
 
    Add `--remove-existing-container` to recreate an existing Dev Container.
+
+   The project directory is mounted in the container at `/workspaces`.
 
 ## Connecting over SSH
 
@@ -78,6 +84,23 @@ At the first connection, SSH asks you to confirm the container host-key
 fingerprint. Password login and `root` login are disabled; only public-key
 login for the `vscode` user is allowed. An interactive SSH session starts in
 `/workspaces`.
+
+## SSH host-key storage
+
+The SSH client key and the SSH host key have different purposes. The client
+public key (`.ssh/id_ed25519.pub`) is copied into the image as `authorized_keys`;
+it is public and only authorizes a client to log in.
+
+The SSH host private key (`.ssh/ssh_host_ed25519_key`) is not copied into the
+image. Docker Compose bind-mounts it, together with its public key, into
+`/etc/ssh` as read-only files at runtime. This keeps the key stable across Dev
+Container recreates without storing it in Docker image layers, build cache, or
+image exports. Only the client public key is included in the image. The `.ssh`
+directory is excluded from Git.
+
+Keep these host-key files to preserve the server identity. If you intentionally
+rotate them, verify the new fingerprint before updating each client's
+`known_hosts` entry.
 
 ## Changing the key or port
 
@@ -101,7 +124,8 @@ devcontainer up \
 
 Files in the project directory remain available because the workspace is
 mounted into the container. Data stored only in the old container filesystem is
-removed.
+removed. The SSH host key remains available because it is stored in the
+project's `.ssh` directory and bind-mounted into the container at runtime.
 
 To also rebuild the image without using Docker's build cache, add
 `--build-no-cache`:
