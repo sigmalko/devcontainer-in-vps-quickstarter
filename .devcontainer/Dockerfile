@@ -2,6 +2,8 @@
 FROM ghcr.io/sigmalko/devcontainer-in-vps:latest
 
 # sshd runs as the container's foreground process; only vscode may log in by key.
+# The entry command copies the read-only host bind mount to the Linux
+# filesystem path below with mode 0600 before sshd starts.
 RUN mkdir -p /run/sshd \
     && printf '%s\n' \
         'PasswordAuthentication no' \
@@ -10,7 +12,7 @@ RUN mkdir -p /run/sshd \
         'AuthenticationMethods publickey' \
         'PermitRootLogin no' \
         'AllowUsers vscode' \
-        'HostKey /etc/ssh/ssh_host_ed25519_key' \
+        'HostKey /run/ssh-host-key/ssh_host_ed25519_key' \
         > /etc/ssh/sshd_config.d/00-devcontainer.conf
 
 # Prepare directories before copying files.

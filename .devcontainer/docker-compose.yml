@@ -8,8 +8,10 @@ services:
     ports:
       - "${SSH_PORT:-2222}:22"
     volumes:
-      - ../.ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
-      - ../.ssh/ssh_host_ed25519_key.pub:/etc/ssh/ssh_host_ed25519_key.pub:ro
+      # Windows bind mounts expose files as mode 0777. Mount the host key only
+      # as a source and copy it to the container filesystem before sshd starts.
+      - ../.ssh/ssh_host_ed25519_key:/run/host-ssh/ssh_host_ed25519_key:ro
+      - ../.ssh/ssh_host_ed25519_key.pub:/run/host-ssh/ssh_host_ed25519_key.pub:ro
     # DO NOT MOUNT /var/run/docker.sock:/var/run/docker.sock HERE (#5458).
     # The `docker-outside-of-docker` feature in devcontainer.json adds the host
     # socket: it mounts it as /var/run/docker-host.sock and places ITS OWN
@@ -27,6 +29,16 @@ services:
       CHROME_BIN: /usr/bin/chromium-browser
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
-    # Dev Containers execute the service command as `containerUser` (vscode).
-    # Both daemons need root: cron writes its PID in /run and sshd binds port 22.
-    command: ["/bin/sh", "-c", "sudo cron && exec sudo /usr/sbin/sshd -D -e"]
+    # The service runs as root: cron writes its PID in /run and sshd binds port
+    # 22. Copying the bind-mounted key gives it Linux mode 0600, which sshd
+    # requires even when the host filesystem is Windows.
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        install -d -o root -g root -m 700 /run/ssh-host-key
+        install -o root -g root -m 600 /run/host-ssh/ssh_host_ed25519_key /run/ssh-host-key/ssh_host_ed25519_key
+        install -o root -g root -m 644 /run/host-ssh/ssh_host_ed25519_key.pub /run/ssh-host-key/ssh_host_ed25519_key.pub
+        cron
+        exec /usr/sbin/sshd -D -e
