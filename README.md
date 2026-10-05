@@ -32,7 +32,19 @@ Run the commands from the project root directory.
    `SSH_PORT` is the port exposed on the host; the container port always
    remains `22`.
 
-3. Generate the SSH key:
+3. Generate the SSH key and start the container:
+
+   On Windows with Docker Desktop, run this from PowerShell:
+
+   ```powershell
+   .\up.ps1
+   ```
+
+   The script creates `.devcontainer/.env` from its template when needed and
+   applies restrictive Windows ACLs to the private client key so Windows
+   OpenSSH accepts it.
+
+   On Linux, macOS, WSL, or Git Bash, run:
 
    ```bash
    ./up.sh

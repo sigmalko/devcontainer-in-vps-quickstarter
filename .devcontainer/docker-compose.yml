@@ -29,16 +29,16 @@ services:
       CHROME_BIN: /usr/bin/chromium-browser
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
-    # The service runs as root: cron writes its PID in /run and sshd binds port
-    # 22. Copying the bind-mounted key gives it Linux mode 0600, which sshd
-    # requires even when the host filesystem is Windows.
+    # Dev Containers execute this command as containerUser (vscode), so the
+    # privileged setup and daemons use sudo. Copying the bind-mounted key gives
+    # it Linux mode 0600, which sshd requires even when the host is Windows.
     command:
       - /bin/sh
       - -c
       - |
         set -eu
-        install -d -o root -g root -m 700 /run/ssh-host-key
-        install -o root -g root -m 600 /run/host-ssh/ssh_host_ed25519_key /run/ssh-host-key/ssh_host_ed25519_key
-        install -o root -g root -m 644 /run/host-ssh/ssh_host_ed25519_key.pub /run/ssh-host-key/ssh_host_ed25519_key.pub
-        cron
-        exec /usr/sbin/sshd -D -e
+        sudo install -d -o root -g root -m 700 /run/ssh-host-key
+        sudo install -o root -g root -m 600 /run/host-ssh/ssh_host_ed25519_key /run/ssh-host-key/ssh_host_ed25519_key
+        sudo install -o root -g root -m 644 /run/host-ssh/ssh_host_ed25519_key.pub /run/ssh-host-key/ssh_host_ed25519_key.pub
+        sudo cron
+        exec sudo /usr/sbin/sshd -D -e
