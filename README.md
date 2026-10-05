@@ -7,13 +7,60 @@ an Ed25519 key generated locally in the project directory.
 
 - Docker Engine and Docker Compose v2,
 - the `ssh-keygen` tool (OpenSSH package),
-- optionally, VS Code with the **Dev Containers** extension or the
-  `@devcontainers/cli` CLI,
+- the `@devcontainers/cli` CLI (`devcontainer` command) when using either
+  startup script,
 - the `SSH_PORT` port open on the host/VPS and in its firewall.
+
+## Windows: Docker Desktop and PowerShell
+
+Use this route for a project stored on a Windows drive such as `C:\dev\...`.
+It is designed for Docker Desktop running Linux containers; it does not require
+WSL or Git Bash.
+
+Before the first run, install and start:
+
+- Docker Desktop, configured for Linux containers;
+- the Windows **OpenSSH Client** (`ssh` and `ssh-keygen`);
+- Node.js and the Dev Containers CLI:
+
+  ```powershell
+  npm install --global @devcontainers/cli
+  ```
+
+From a regular PowerShell window in the repository root, run:
+
+```powershell
+.\up.ps1
+```
+
+If your execution policy blocks project scripts, use this one-off invocation;
+it does not change the machine-wide execution policy:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\up.ps1
+```
+
+`up.ps1` verifies that Docker Desktop, Docker Compose v2, OpenSSH and the Dev
+Containers CLI are available. It creates `.devcontainer/.env` from the
+template when absent, creates the client and host key pairs in `.ssh`, applies
+the restrictive ACL required by Windows OpenSSH to private keys, stages the
+client public key, and recreates the Dev Container.
+
+The port comes from `SSH_PORT` in `.devcontainer/.env`; the template defaults
+to `2222`. After a successful start, connect from PowerShell with:
+
+```powershell
+ssh -i .\.ssh\id_ed25519 -p 2222 vscode@localhost
+```
+
+Replace `2222` if you changed `SSH_PORT`. If Docker reports that the port is
+already allocated, choose a free host port in `.devcontainer/.env`, then run
+`up.ps1` again. The container always listens on port `22` internally.
 
 ## First-time setup
 
-Run the commands from the project root directory.
+For Linux, macOS, WSL, or Git Bash, run the following commands from the
+project root directory. For native Windows PowerShell, use the section above.
 
 1. Create the local Compose configuration file:
 
@@ -33,18 +80,6 @@ Run the commands from the project root directory.
    remains `22`.
 
 3. Generate the SSH key and start the container:
-
-   On Windows with Docker Desktop, run this from PowerShell:
-
-   ```powershell
-   .\up.ps1
-   ```
-
-   The script creates `.devcontainer/.env` from its template when needed and
-   applies restrictive Windows ACLs to the private client key so Windows
-   OpenSSH accepts it.
-
-   On Linux, macOS, WSL, or Git Bash, run:
 
    ```bash
    ./up.sh
@@ -81,7 +116,13 @@ Run the commands from the project root directory.
 
 ## Connecting over SSH
 
-From the host running Docker, connect with:
+From Windows PowerShell on the host running Docker, connect with:
+
+```powershell
+ssh -i .\.ssh\id_ed25519 -p 2222 vscode@localhost
+```
+
+From Linux, macOS, WSL, or Git Bash, use:
 
 ```bash
 ssh -i .ssh/id_ed25519 -p 2222 vscode@localhost
@@ -107,11 +148,14 @@ the client public key (`.ssh/id_ed25519.pub`) at
 `authorized_keys`; it is public and only authorizes a client to log in.
 
 The SSH host private key (`.ssh/ssh_host_ed25519_key`) is not copied into the
-image. Docker Compose bind-mounts it, together with its public key, into
-`/etc/ssh` as read-only files at runtime. This keeps the key stable across Dev
-Container recreates without storing it in Docker image layers, build cache, or
-image exports. Only the staged client public key is included in the image. The
-`.ssh` directory and the staged file are excluded from Git.
+image. Docker Compose bind-mounts it, together with its public key, as a
+read-only runtime source. Before `sshd` starts, the container copies the keys
+to `/run/ssh-host-key` and applies `root:root` ownership and mode `0600` to
+the private key. This is necessary for Windows bind mounts, which otherwise
+appear as mode `0777` and are rejected by `sshd`. The copy exists only for the
+life of the container; the stable source key remains in `.ssh`. Only the
+staged client public key is included in the image. The `.ssh` directory and
+the staged file are excluded from Git.
 
 Keep these host-key files to preserve the server identity. If you intentionally
 rotate them, verify the new fingerprint before updating each client's
