@@ -44,7 +44,9 @@ RUN printf '%s\n' \
 
 RUN mkdir -p /home/vscode/.bashrc.d && chown vscode:vscode /home/vscode/.bashrc.d
 COPY --chown=vscode:vscode .devcontainer/bashrc-truecolor.sh /home/vscode/.bashrc.d/truecolor.sh
-RUN printf '%s\n' \
+# Defend against CRLF line endings if a working tree was written by Windows.
+RUN sed -i 's/\r$//' /home/vscode/.bashrc.d/truecolor.sh && \
+    printf '%s\n' \
         '' \
         '[ -f ~/.bashrc.d/truecolor.sh ] && . ~/.bashrc.d/truecolor.sh' \
         >> /home/vscode/.bashrc && \
