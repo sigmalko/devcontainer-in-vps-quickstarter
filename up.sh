@@ -6,6 +6,7 @@ project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 ssh_dir="$project_dir/.ssh"
 client_private_key="$ssh_dir/id_ed25519"
 host_private_key="$ssh_dir/ssh_host_ed25519_key"
+authorized_keys_file="$project_dir/.devcontainer/authorized_keys"
 
 ensure_ssh_key_pair() {
   local private_key="$1"
@@ -32,6 +33,12 @@ ensure_ssh_key_pair() {
 
 ensure_ssh_key_pair "$client_private_key" "devcontainer-in-vps-client"
 ensure_ssh_key_pair "$host_private_key" "devcontainer-in-vps-host"
+
+# Docker excludes .ssh from its build context so private keys can never enter
+# the image. Stage only the client public key at the path consumed by the
+# Dockerfile.
+cp "$client_private_key.pub" "$authorized_keys_file"
+chmod 644 "$authorized_keys_file"
 
 devcontainer up \
   --remove-existing-container \
