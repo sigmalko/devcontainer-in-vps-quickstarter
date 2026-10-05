@@ -44,9 +44,11 @@ Run the commands from the project root directory.
    - `.ssh/ssh_host_ed25519_key` and `.ssh/ssh_host_ed25519_key.pub` identify
      the SSH server.
 
-   The client public key is copied into the image as the `authorized_keys` file
-   for the `vscode` user. Both private keys remain on the host. The script then
-   removes an existing Dev Container, builds a new one, and starts it.
+   The script stages the client public key in `.devcontainer/authorized_keys`
+   for the image build, where it becomes the `authorized_keys` file for the
+   `vscode` user. The staged file and both private keys remain untracked. The
+   script then removes an existing Dev Container, builds a new one, and starts
+   it.
 
 4. Alternatively, build and start the Dev Container manually.
 
@@ -87,16 +89,17 @@ login for the `vscode` user is allowed. An interactive SSH session starts in
 
 ## SSH host-key storage
 
-The SSH client key and the SSH host key have different purposes. The client
-public key (`.ssh/id_ed25519.pub`) is copied into the image as `authorized_keys`;
-it is public and only authorizes a client to log in.
+The SSH client key and the SSH host key have different purposes. `up.sh` stages
+the client public key (`.ssh/id_ed25519.pub`) at
+`.devcontainer/authorized_keys`, which is copied into the image as
+`authorized_keys`; it is public and only authorizes a client to log in.
 
 The SSH host private key (`.ssh/ssh_host_ed25519_key`) is not copied into the
 image. Docker Compose bind-mounts it, together with its public key, into
 `/etc/ssh` as read-only files at runtime. This keeps the key stable across Dev
 Container recreates without storing it in Docker image layers, build cache, or
-image exports. Only the client public key is included in the image. The `.ssh`
-directory is excluded from Git.
+image exports. Only the staged client public key is included in the image. The
+`.ssh` directory and the staged file are excluded from Git.
 
 Keep these host-key files to preserve the server identity. If you intentionally
 rotate them, verify the new fingerprint before updating each client's
